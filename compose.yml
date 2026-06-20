@@ -1,12 +1,14 @@
 name: ${DOCKER_NAME}
+
 services:
- nginx:
-   build:
-     context: .
-     dockerfile: Dockerfile.nginx
-   expose:
-     - "80"
-   restart: unless-stopped
+  nginx:
+    build:
+      context: .
+      dockerfile: Dockerfile.nginx
+    expose:
+      - "80"
+    restart: unless-stopped
+
   cockroach:
     image: cockroachdb/cockroach:latest-v24.2
     command: start-single-node --accept-sql-without-tls
@@ -40,10 +42,11 @@ services:
       - REDPANDA_SUPERUSER_USERNAME=${REDPANDA_ADMIN_USER}
       - REDPANDA_SUPERUSER_PASSWORD=${REDPANDA_ADMIN_PWD}
     healthcheck:
-      test: ['CMD', 'rpk', 'cluster', 'info', '-X', 'user=${REDPANDA_ADMIN_USER}', '-X', 'pass=${REDPANDA_ADMIN_PWD}']
+      test: ["CMD", "rpk", "cluster", "info", "-X", "user=${REDPANDA_ADMIN_USER}", "-X", "pass=${REDPANDA_ADMIN_PWD}"]
       interval: 10s
       timeout: 5s
       retries: 10
+    restart: unless-stopped
 
   minio:
     image: "minio/minio"
@@ -51,7 +54,7 @@ services:
     volumes:
       - ${VOLUME_FILES_PATH:-files}:/data
     healthcheck:
-      test: ['CMD', 'mc', 'ready', 'local']
+      test: ["CMD", "mc", "ready", "local"]
       interval: 5s
       retries: 10
     restart: unless-stopped
@@ -75,45 +78,6 @@ services:
       retries: 10
       test: curl -s http://localhost:9200/_cluster/health | grep -vq '"status":"red"'
     restart: unless-stopped
-
-  # mongodb:
-  #   image: mongo:7-jammy
-  #   restart: unless-stopped
-  #   volumes:
-  #     - ${VOLUME_MONGO_PATH:-mongodb}:/data/db
-  #   networks:
-  #     - huly_net
-  #   # Required by aibot and calendar services
-
-  # redis:
-  #   image: redis:7-alpine
-  #   command: redis-server --maxmemory 512mb --maxmemory-policy allkeys-lru
-  #   restart: unless-stopped
-  #   networks:
-  #     - huly_net
-  #   # Required by HulyPulse (push notifications / real-time updates)
-
-  # hulypulse:
-  #   image: hardcoreeng/service_hulypulse:${HULY_PULSE_VERSION:-0.1.29}
-  #   ports:
-  #     - 8099:8099
-  #   environment:
-  #     - HULY_BIND_PORT=8099
-  #     - HULY_LOG=info
-  #     - HULY_TOKEN_SECRET=${SECRET}
-  #     - HULY_HEARTBEAT_TIMEOUT=60
-  #     - HULY_BACKEND=memory
-  #     # For Redis backend instead of in-memory (optional, e.g. multi-node setups):
-  #     # - HULY_BACKEND=redis
-  #     # - HULY_REDIS_MODE=direct
-  #     # - HULY_REDIS_URLS=redis://redis:6379
-  #   deploy:
-  #     resources:
-  #       limits:
-  #         memory: 512M
-  #   restart: unless-stopped
-  #   networks:
-  #     - huly_net
 
   rekoni:
     image: hardcoreeng/rekoni-service:${HULY_VERSION}
@@ -178,7 +142,6 @@ services:
       - STATS_URL=http://stats:4900
       - QUEUE_CONFIG=redpanda:9092
       - ACCOUNTS_DB_URL=${CR_DB_URL}
-    # - INIT_REPO_DIR=/no-init-scripts
     restart: unless-stopped
 
   front:
@@ -237,14 +200,11 @@ services:
       - HULY_DB_CONNECTION=${CR_DB_URL}
       - HULY_TOKEN_SECRET=${SECRET}
     restart: unless-stopped
-      
+
 volumes:
-  # These named volumes are used when custom volume paths are not specified
-  # If VOLUME_*_PATH variables are set, these volumes will be ignored
   elastic:
   files:
   cr_data:
   cr_certs:
   redpanda:
   mongodb:
-
